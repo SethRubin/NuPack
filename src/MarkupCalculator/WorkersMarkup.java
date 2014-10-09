@@ -1,3 +1,4 @@
+package MarkupCalculator;
 import java.math.BigDecimal;
 
 public class WorkersMarkup extends Markup {

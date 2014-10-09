@@ -1,3 +1,5 @@
+package MarkupCalculator;
+
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +13,7 @@ public class MarkupCalculator {
 	private FoodMarkup foodMarkup;
 	private ElectronicMarkup electronicMarkup;
 
-	private boolean gotBasePrice;
+	private boolean gotRequiredInfo;
 	private boolean hasPharmaceuticalMarkup;
 	private boolean hasFoodMarkup;
 	private boolean hasElectronicMarkup;
@@ -25,10 +27,24 @@ public class MarkupCalculator {
 		electronicMarkup = new ElectronicMarkup();
 	}
 
+	private void reset() {
+		workersMarkup.setNumberWorkers(0);
+
+		gotRequiredInfo = false;
+		hasPharmaceuticalMarkup = false;
+		hasFoodMarkup = false;
+		hasElectronicMarkup = false;
+	}
+
 	private boolean checkBasePrice(String basePriceString) {
 		if (basePriceString.startsWith("$")) {
 			try {
 				String numString = basePriceString.substring(1);
+				if (numString.startsWith("-") || numString.startsWith("+")) {
+					System.err
+							.println("The first entry should not have +/- signs");
+					return false;
+				}
 				basePrice.setBasePrice(new BigDecimal(numString));
 				return true;
 			} catch (NumberFormatException e) {
@@ -52,9 +68,14 @@ public class MarkupCalculator {
 		}
 		try {
 			String numString = numberWorkersList.get(0);
+			if (numString.startsWith("-") || numString.startsWith("+")) {
+				System.err
+						.println("The second entry should not have +/- signs");
+				return false;
+			}
 			int numWorkers = Integer.parseInt(numString);
-			if (!((numWorkers == 1 && numberWorkersList.get(1).equals("person")) || numberWorkersList
-					.get(1).equals("people"))) {
+			if (!((numWorkers == 1 && numberWorkersList.get(1).equals("person")) || (numWorkers != 1 && numberWorkersList
+					.get(1).equals("people")))) {
 				System.err
 						.println("The second entry is not followed by 'person' or 'people', or is using the wrong word");
 				return false;
@@ -89,17 +110,18 @@ public class MarkupCalculator {
 	}
 
 	public String getMarkup(List<String> markupList) {
+		reset();
 		for (int i = 0; i < markupList.size(); i++) {
 			String stringMarkup = markupList.get(i);
 			if (i == 0) {
 				if (!checkBasePrice(stringMarkup)) {
 					return null;
 				}
-				gotBasePrice = true;
 			} else if (i == 1) {
 				if (!checkNumberWorkers(stringMarkup)) {
 					return null;
 				}
+				gotRequiredInfo = true;
 			} else {
 				if (!hasPharmaceuticalMarkup) {
 					List<String> pharmaceuticalMarkupList = pharmaceuticalMarkup
@@ -130,8 +152,8 @@ public class MarkupCalculator {
 				}
 			}
 		}
-		if (!gotBasePrice) {
-			System.err.println("The input is empty");
+		if (!gotRequiredInfo) {
+			System.err.println("The input does not have a base price and number of workers");
 			return null;
 		}
 		return "$".concat(calculateMarkup().setScale(2,
@@ -149,10 +171,4 @@ public class MarkupCalculator {
 	public void addElectronicString(String stringToAdd) {
 		electronicMarkup.addStringToList(stringToAdd);
 	}
-
-//	public static void main(String[] args) {
-//		MarkupCalculator markupCalculator = new MarkupCalculator();
-//		System.out.println(markupCalculator
-//				.getMarkup("$12456.95\n4 people\nbooks"));
-//	}
 }
